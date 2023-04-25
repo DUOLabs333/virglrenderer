@@ -16,6 +16,18 @@ enum vkr_ring_status_flag {
    VKR_RING_STATUS_IDLE = 1u << 0,
 };
 
+#ifdef __APPLE__
+#include <time.h>
+static inline int clock_nanosleep(clockid_t clock_id, int flags,
+                              const struct timespec *request,
+                              struct timespec *remain) {
+  struct timespec now;
+  int rc;
+  rc=nanosleep(request, remain);
+  
+  return rc;
+}
+#endif
 /* callers must make sure they do not seek to end-of-resource or beyond */
 static const struct iovec *
 seek_resource(const struct vkr_resource_attachment *att,
@@ -250,6 +262,7 @@ vkr_ring_now(void)
       return 0;
    return ns_per_sec * now.tv_sec + now.tv_nsec;
 }
+
 
 static void
 vkr_ring_relax(uint32_t *iter)

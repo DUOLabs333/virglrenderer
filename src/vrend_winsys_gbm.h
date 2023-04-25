@@ -127,6 +127,10 @@ int virgl_gbm_get_plane_bytes_per_pixel(struct gbm_bo *bo, int plane);
 bool virgl_gbm_external_allocation_preferred(uint32_t flags);
 bool virgl_gbm_gpu_import_required(uint32_t flags);
 
+#else
+static inline struct virgl_gbm *virgl_gbm_init(int fd){
+   return NULL;
+}
 #endif
 
 #endif

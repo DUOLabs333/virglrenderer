@@ -81,6 +81,7 @@ vkr_get_fd_info_from_allocation_info(struct vkr_physical_device *physical_dev,
                                      struct gbm_bo **out_gbm_bo,
                                      VkImportMemoryFdInfoKHR *out_fd_info)
 {
+#ifndef __APPLE__
 #ifdef MINIGBM
    const uint32_t gbm_bo_use_flags =
       GBM_BO_USE_LINEAR | GBM_BO_USE_SW_READ_RARELY | GBM_BO_USE_SW_WRITE_RARELY;
@@ -121,6 +122,7 @@ vkr_get_fd_info_from_allocation_info(struct vkr_physical_device *physical_dev,
       .fd = fd,
       .handleType = VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT,
    };
+   #endif
    return VK_SUCCESS;
 }
 
@@ -232,8 +234,10 @@ vkr_dispatch_vkAllocateMemory(struct vn_dispatch_context *dispatch,
    if (!mem) {
       if (local_import_info.fd >= 0)
          close(local_import_info.fd);
+      #ifndef __APPLE__
       if (gbm_bo)
          gbm_bo_destroy(gbm_bo);
+      #endif
       return;
    }
 
@@ -355,8 +359,10 @@ vkr_context_init_device_memory_dispatch(struct vkr_context *ctx)
 void
 vkr_device_memory_release(struct vkr_device_memory *mem)
 {
+   #ifndef __APPLE__
    if (mem->gbm_bo)
       gbm_bo_destroy(mem->gbm_bo);
+   #endif
 }
 
 int
@@ -373,7 +379,11 @@ vkr_device_memory_export_fd(struct vkr_device_memory *mem,
              (mem->valid_fd_types == 1 << VIRGL_RESOURCE_FD_DMABUF));
 
       /* gbm_bo_get_fd returns negative error code on failure */
+      #ifndef __APPLE__
       fd = gbm_bo_get_fd(mem->gbm_bo);
+      #else
+      fd=-1;
+      #endif
       if (fd < 0)
          return fd;
    } else {

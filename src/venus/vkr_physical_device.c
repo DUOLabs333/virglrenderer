@@ -13,6 +13,7 @@
 #include "vkr_instance.h"
 
 /* TODO open render node and create gbm_device per vkr_physical_device */
+
 static struct gbm_device *vkr_gbm_dev;
 
 static void

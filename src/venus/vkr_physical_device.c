@@ -170,9 +170,11 @@ vkr_physical_device_init_memory_properties(struct vkr_physical_device *physical_
           VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT);
    }
 
+   #ifndef __APPLE__
    if (!physical_dev->is_dma_buf_fd_export_supported &&
        !physical_dev->is_opaque_fd_export_supported)
       physical_dev->gbm_device = vkr_physical_device_get_gbm_device(physical_dev);
+   #endif
 }
 
 static void
@@ -233,6 +235,15 @@ vkr_physical_device_init_extensions(struct vkr_physical_device *physical_dev,
          physical_dev->KHR_external_fence_fd = false;
    }
 
+   VkExtensionProperties test;
+   strcpy(test.extensionName,VK_EXT_QUEUE_FAMILY_FOREIGN_EXTENSION_NAME);
+   test.specVersion=1;
+
+   VkExtensionProperties test1;
+   strcpy(test1.extensionName,VK_EXT_IMAGE_DRM_FORMAT_MODIFIER_EXTENSION_NAME);
+   test1.specVersion=1;
+   exts[advertised_count++]=test;
+   exts[advertised_count++]=test1;
    physical_dev->extensions = exts;
    physical_dev->extension_count = advertised_count;
 }

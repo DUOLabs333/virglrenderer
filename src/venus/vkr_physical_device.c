@@ -234,16 +234,17 @@ vkr_physical_device_init_extensions(struct vkr_physical_device *physical_dev,
       if (!(fence_props.externalFenceFeatures & VK_EXTERNAL_FENCE_FEATURE_EXPORTABLE_BIT))
          physical_dev->KHR_external_fence_fd = false;
    }
+   #ifdef __APPLE__ //Add support for these extensions until they get added in MoltenVK
+      VkExtensionProperties test;
+      strcpy(test.extensionName,VK_EXT_QUEUE_FAMILY_FOREIGN_EXTENSION_NAME);
+      test.specVersion=1;
 
-   VkExtensionProperties test;
-   strcpy(test.extensionName,VK_EXT_QUEUE_FAMILY_FOREIGN_EXTENSION_NAME);
-   test.specVersion=1;
-
-   VkExtensionProperties test1;
-   strcpy(test1.extensionName,VK_EXT_IMAGE_DRM_FORMAT_MODIFIER_EXTENSION_NAME);
-   test1.specVersion=1;
-   exts[advertised_count++]=test;
-   exts[advertised_count++]=test1;
+      VkExtensionProperties test1;
+      strcpy(test1.extensionName,VK_EXT_IMAGE_DRM_FORMAT_MODIFIER_EXTENSION_NAME);
+      test1.specVersion=1;
+      exts[advertised_count++]=test;
+      exts[advertised_count++]=test1;
+   #endif
    physical_dev->extensions = exts;
    physical_dev->extension_count = advertised_count;
 }

@@ -110,7 +110,27 @@ vkr_dispatch_vkCreateDevice(struct vn_dispatch_context *dispatch,
       ((VkDeviceCreateInfo *)args->pCreateInfo)->ppEnabledExtensionNames = exts;
       ((VkDeviceCreateInfo *)args->pCreateInfo)->enabledExtensionCount = ext_count;
    }
-
+   #ifdef __APPLE__ //Disable them because there's no support from them
+      exts = malloc(sizeof(*exts) * ext_count);
+      char *ext_name;
+      int index=0;
+      if (!exts) {
+         args->ret = VK_ERROR_OUT_OF_HOST_MEMORY;
+         return;
+      }
+      for (uint32_t i=0; i<ext_count; i++){
+         strcpy(ext_name,args->pCreateInfo->ppEnabledExtensionNames[i]);
+         if (!strcmp(ext_name,VK_EXT_QUEUE_FAMILY_FOREIGN_EXTENSION_NAME) || !strcmp(ext_name,VK_EXT_IMAGE_DRM_FORMAT_MODIFIER_EXTENSION_NAME) || !strcmp(ext_name,VK_KHR_IMAGE_FORMAT_LIST_EXTENSION_NAME)){
+            ext_count--;
+            continue;
+         }
+         exts[index++]=ext_name;
+         fprintf(stderr,"%d\n",ext_count);
+      }
+      ((VkDeviceCreateInfo *)args->pCreateInfo)->ppEnabledExtensionNames = exts;
+      ((VkDeviceCreateInfo *)args->pCreateInfo)->enabledExtensionCount = ext_count;
+   #endif
+   fprintf(stderr, "%s\n", "HELLO");
    struct vkr_device *dev =
       vkr_context_alloc_object(ctx, sizeof(*dev), VK_OBJECT_TYPE_DEVICE, args->pDevice);
    if (!dev) {

@@ -548,7 +548,7 @@ static inline void vn_dispatch_command(struct vn_dispatch_context *ctx)
 
     vn_decode_VkCommandTypeEXT(ctx->decoder, &cmd_type);
     vn_decode_VkFlags(ctx->decoder, &cmd_flags);
-
+    fprintf(stderr, "%s\n", vn_dispatch_command_name(cmd_type));
     {
 #ifdef DEBUG
         TRACE_SCOPE_SLOW(vn_dispatch_command_name(cmd_type));

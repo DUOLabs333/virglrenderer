@@ -138,8 +138,13 @@ vkr_dispatch_vkGetImageDrmFormatModifierPropertiesEXT(
    struct vn_device_proc_table *vk = &dev->proc_table;
 
    vn_replace_vkGetImageDrmFormatModifierPropertiesEXT_args_handle(args);
+   #ifdef __APPLE__
+      args->pProperties->drmFormatModifier=0;
+      args->ret=VK_SUCCESS;
+   #else
    args->ret = vk->GetImageDrmFormatModifierPropertiesEXT(args->device, args->image,
                                                           args->pProperties);
+   #endif
 }
 
 static void

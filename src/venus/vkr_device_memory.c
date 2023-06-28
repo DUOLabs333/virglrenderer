@@ -12,6 +12,33 @@
 #include "vkr_device_memory_gen.h"
 #include "vkr_physical_device.h"
 
+#ifdef __APPLE__
+    #include <sys/mman.h>
+    #include <fcntl.h>
+    static int new_fd(){
+      char name[16] = "/shm-";
+      struct timespec tv;
+      unsigned long r;
+      char *const limit = name + sizeof(name) - 1;
+      char *start;
+      char *fill;
+      int fd, tries;
+
+      *limit = 0;
+      start = name + strlen(name);
+      for (tries = 0; tries < 4; tries++) {
+         clock_gettime(CLOCK_REALTIME, &tv);
+         r = (unsigned long)tv.tv_sec + (unsigned long)tv.tv_nsec;
+         for (fill = start; fill < limit; r /= 8)
+            *fill++ = '0' + (r % 8);
+         fd = shm_open(
+           name, O_RDWR | O_CREAT | O_EXCL | O_NOFOLLOW);
+         return fd;
+      }
+
+    }
+#endif
+
 static bool
 vkr_get_fd_handle_type_from_virgl_fd_type(
    struct vkr_physical_device *dev,
@@ -240,7 +267,9 @@ vkr_dispatch_vkAllocateMemory(struct vn_dispatch_context *dispatch,
       #endif
       return;
    }
-
+   #ifdef __APPLE__
+      valid_fd_types |= 1 << VIRGL_RESOURCE_FD_DMABUF;
+   #endif
    mem->device = dev;
    mem->property_flags = property_flags;
    mem->valid_fd_types = valid_fd_types;
@@ -379,11 +408,12 @@ vkr_device_memory_export_fd(struct vkr_device_memory *mem,
              (mem->valid_fd_types == 1 << VIRGL_RESOURCE_FD_DMABUF));
 
       /* gbm_bo_get_fd returns negative error code on failure */
-      #ifndef __APPLE__
-      fd = gbm_bo_get_fd(mem->gbm_bo);
+      #ifdef __APPLE__
+         fd=-1;
       #else
-      fd=-1;
+         fd = gbm_bo_get_fd(mem->gbm_bo);
       #endif
+
       if (fd < 0)
          return fd;
    } else {
@@ -394,7 +424,16 @@ vkr_device_memory_export_fd(struct vkr_device_memory *mem,
          .memory = mem_handle,
          .handleType = handle_type,
       };
-      VkResult result = vk->GetMemoryFdKHR(dev_handle, &fd_info, &fd);
+      #ifdef __APPLE__
+         fd=new_fd();
+         ftruncate(fd,5*pow(10,6)); //On MacOS, you can't ftruncate twice, so have to overallocate just in case
+         void* sharedMemory=mmap(NULL, sizeof(VkDeviceMemory), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+         memcpy(sharedMemory,fd_info.memory,sizeof(VkDeviceMemory));
+         munmap(sharedMemory,sizeof(VkDeviceMemory));
+         VkResult result=VK_SUCCESS;
+      #else
+         VkResult result = vk->GetMemoryFdKHR(dev_handle, &fd_info, &fd);
+      #endif
       if (result != VK_SUCCESS)
          return result == VK_ERROR_TOO_MANY_OBJECTS ? -EMFILE : -ENOMEM;
    }

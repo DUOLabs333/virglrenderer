@@ -1058,6 +1058,7 @@ int virgl_renderer_resource_map(uint32_t res_handle, void **out_map, uint64_t *o
       case VIRGL_RESOURCE_FD_SHM:
          map = mmap(NULL, res->map_size, PROT_WRITE | PROT_READ, MAP_SHARED, res->fd, 0);
          map_size = res->map_size;
+         fprintf(stderr, "%s\n", strerror(errno));
          break;
       case VIRGL_RESOURCE_FD_OPAQUE:
          ret = vkr_allocator_resource_map(res, &map, &map_size);

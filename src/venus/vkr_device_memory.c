@@ -32,7 +32,7 @@
          for (fill = start; fill < limit; r /= 8)
             *fill++ = '0' + (r % 8);
          fd = shm_open(
-           name, O_RDWR | O_CREAT | O_EXCL | O_NOFOLLOW);
+           name, O_RDWR | O_CREAT);
          return fd;
       }
 
@@ -426,7 +426,7 @@ vkr_device_memory_export_fd(struct vkr_device_memory *mem,
       };
       #ifdef __APPLE__
          fd=new_fd();
-         ftruncate(fd,5*pow(10,6)); //On MacOS, you can't ftruncate twice, so have to overallocate just in case
+         ftruncate(fd,5*pow(10,8)); //On MacOS, you can't ftruncate twice, so have to overallocate just in case
          void* sharedMemory=mmap(NULL, sizeof(VkDeviceMemory), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
          memcpy(sharedMemory,fd_info.memory,sizeof(VkDeviceMemory));
          munmap(sharedMemory,sizeof(VkDeviceMemory));

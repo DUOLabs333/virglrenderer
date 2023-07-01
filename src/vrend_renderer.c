@@ -12019,7 +12019,17 @@ struct vrend_resource *vrend_resource_lookup_wide(struct vrend_context *ctx, uin
    struct virgl_resource *virgl_res = virgl_resource_lookup(res_id);
    if (!virgl_res)
       return NULL;
-   res=(struct vrend_resource *)virgl_res;
+   struct vrend_renderer_resource_create_args cargs = {
+         .width = 500,
+         .height = 500,
+         .depth = 1,
+         .target = PIPE_TEXTURE_2D,
+         .nr_samples = 0,
+         .bind = VIRGL_RES_BIND_SAMPLER_VIEW,
+         .format = VIRGL_FORMAT_R8G8B8A8_SRGB,
+      };
+
+   res=vrend_resource_create(&cargs);
    return res;
 
 

@@ -2214,7 +2214,7 @@ int vrend_create_surface(struct vrend_context *ctx,
       return EINVAL;
    }
 
-   res = vrend_renderer_ctx_res_lookup(ctx, res_handle);
+   res = vrend_resource_lookup_wide(ctx, res_handle);
    if (!res) {
       vrend_report_context_error(ctx, VIRGL_ERROR_CTX_ILLEGAL_RESOURCE, res_handle);
       return EINVAL;
@@ -12007,6 +12007,22 @@ void vrend_renderer_detach_res_ctx(struct vrend_context *ctx,
 struct vrend_resource *vrend_renderer_ctx_res_lookup(struct vrend_context *ctx, int res_handle)
 {
    return vrend_ctx_resource_lookup(ctx->res_hash, res_handle);
+}
+
+struct vrend_resource *vrend_resource_lookup_wide(struct vrend_context *ctx, uint32_t res_id)
+{
+   struct vrend_resource *res = vrend_renderer_ctx_res_lookup(ctx, res_id);
+   if (res)
+      return res;
+
+   //Look for resource in virgl context
+   struct virgl_resource *virgl_res = virgl_resource_lookup(res_id);
+   if (!virgl_res)
+      return NULL;
+   res=(struct vrend_resource *)virgl_res;
+   return res;
+
+
 }
 
 void vrend_context_set_debug_flags(struct vrend_context *ctx, const char *flagstring)

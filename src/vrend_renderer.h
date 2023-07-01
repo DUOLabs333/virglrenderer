@@ -426,6 +426,9 @@ void vrend_check_texture_multisample(struct vrend_format_table *table,
 struct vrend_resource *vrend_renderer_ctx_res_lookup(struct vrend_context *ctx,
                                                      int res_handle);
 
+struct vrend_resource *vrend_resource_lookup_wide(struct vrend_context *ctx,
+                                                     uint32_t res_id);
+
 void vrend_renderer_resource_destroy(struct vrend_resource *res);
 
 static inline void

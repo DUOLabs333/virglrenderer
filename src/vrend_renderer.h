@@ -94,6 +94,7 @@ struct vrend_resource {
    GLuint memobj;
 
    uint32_t blob_id;
+   uint32_t imported_id;
    struct list_head head;
 };
 

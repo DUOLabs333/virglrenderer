@@ -13,6 +13,7 @@ files_mesa = files(
   'util/u_cpu_detect.c',
   'util/u_debug.c',
   'util/u_math.c',
+  'util/dma_command.cpp'
 )
 
 deps_mesa = [

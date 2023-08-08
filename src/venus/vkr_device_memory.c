@@ -427,9 +427,9 @@ vkr_device_memory_export_fd(struct vkr_device_memory *mem,
       #ifdef __APPLE__
          fd=new_fd();
          ftruncate(fd,5*pow(10,8)); //On MacOS, you can't ftruncate twice, so have to overallocate just in case
-         void* sharedMemory=mmap(NULL, sizeof(VkDeviceMemory), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-         memcpy(sharedMemory,fd_info.memory,sizeof(VkDeviceMemory));
-         munmap(sharedMemory,sizeof(VkDeviceMemory));
+         //void* sharedMemory=mmap(NULL, sizeof(VkDeviceMemory), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+         //memcpy(sharedMemory,fd_info.memory,sizeof(VkDeviceMemory));
+         //munmap(sharedMemory,sizeof(VkDeviceMemory));
          VkResult result=VK_SUCCESS;
       #else
          VkResult result = vk->GetMemoryFdKHR(dev_handle, &fd_info, &fd);

@@ -2220,6 +2220,11 @@ int vrend_create_surface(struct vrend_context *ctx,
       return EINVAL;
    }
 
+   if (res->imported_id == res_handle) {
+      // Swapchain imported from Vulkan?
+      format = VIRGL_FORMAT_B8G8R8A8_SRGB;
+   }
+
    surf = CALLOC_STRUCT(vrend_surface);
    if (!surf)
       return ENOMEM;
@@ -2516,10 +2521,15 @@ int vrend_create_sampler_view(struct vrend_context *ctx,
    int ret_handle;
    uint8_t swizzle[4];
 
-   res = vrend_renderer_ctx_res_lookup(ctx, res_handle);
+   res = vrend_resource_lookup_wide(ctx, res_handle);
    if (!res) {
       vrend_report_context_error(ctx, VIRGL_ERROR_CTX_ILLEGAL_RESOURCE, res_handle);
       return EINVAL;
+   }
+
+   if (res->imported_id == res_handle) {
+      // Swapchain imported from Vulkan?
+      format = VIRGL_FORMAT_B8G8R8A8_SRGB;
    }
 
    view = CALLOC_STRUCT(vrend_sampler_view);
@@ -7046,9 +7056,10 @@ static enum virgl_resource_fd_type vrend_pipe_resource_export_fd(UNUSED struct p
                                                                  UNUSED int *fd,
                                                                  UNUSED void *data)
 {
-#ifdef ENABLE_MINIGBM_ALLOCATION
+
    struct vrend_resource *res = (struct vrend_resource *)pres;
 
+#ifdef ENABLE_MINIGBM_ALLOCATION
    if (res->storage_bits & VREND_STORAGE_GBM_BUFFER) {
       int ret = virgl_gbm_export_fd(gbm->device,
                                     gbm_bo_get_handle(res->gbm_bo).u32, fd);
@@ -7056,6 +7067,13 @@ static enum virgl_resource_fd_type vrend_pipe_resource_export_fd(UNUSED struct p
          return VIRGL_RESOURCE_FD_DMABUF;
    }
 #endif
+
+   // Check whether this is an imported resource
+   if (res->imported_id) {
+      // Find that resource and export that.
+      struct virgl_resource *vres = virgl_resource_lookup(res->imported_id);
+      return virgl_resource_export_fd(vres, fd);
+   }
 
    return VIRGL_RESOURCE_FD_INVALID;
 }
@@ -12030,6 +12048,34 @@ struct vrend_resource *vrend_resource_lookup_wide(struct vrend_context *ctx, uin
       };
 
    res=vrend_resource_create(&cargs);
+   int fd = -1;
+   virgl_resource_export_fd(virgl_res, &fd);
+   #if 0
+   GLuint mem_object;
+   //glCreateMemoryObjectsEXT(1, &mem_object);
+   //glImportMemoryFdEXT(mem_object, virgl_res->map_size, GL_HANDLE_TYPE_OPAQUE_FD_EXT, fd);
+   res->memobj = mem_object;
+   res->storage_bits |= VREND_STORAGE_GL_TEXTURE | VREND_STORAGE_GL_MEMOBJ;
+
+   struct pipe_resource *pr = &res->base;
+   res->target = tgsitargettogltarget(pr->target, pr->nr_samples);
+
+    // Create a GL texture which uses that memory as storage
+   glGenTextures(1, &res->id);
+   glBindTexture(res->target, res->id);
+
+   GLsizei width = 500;
+   GLsizei height = 500;
+   //glTexParameteri(res->target, GL_TEXTURE_TILING_EXT, GL_LINEAR_TILING_EXT);
+   glTexStorageMem2DEXT(res->target, 1, GL_SRGB8_ALPHA8, width, height, mem_object, 0);
+   glBindTexture(res->target, 0);
+   #endif
+   if (res) {
+         // TODO Store this imported resource in a different list?
+         res->imported_id = res_id;
+         list_addtail(&res->head, &ctx->vrend_resources);
+      }
+
    return res;
 
 

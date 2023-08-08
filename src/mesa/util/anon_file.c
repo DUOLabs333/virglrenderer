@@ -35,7 +35,7 @@
 #include <errno.h>
 #include <stdlib.h>
 
-#if defined(HAVE_MEMFD_CREATE) || defined(__FreeBSD__) || defined(__OpenBSD__)
+#if defined(HAVE_MEMFD_CREATE) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
 #include <sys/mman.h>
 #elif defined(ANDROID)
 #include <sys/syscall.h>
@@ -44,6 +44,10 @@
 #include <stdio.h>
 #endif
 
+#ifdef __APPLE__
+   #include "dma_command.h"
+
+#endif 
 #if !(defined(__FreeBSD__) || defined(HAVE_MEMFD_CREATE) || defined(HAVE_MKOSTEMP) || defined(ANDROID))
 static int
 set_cloexec_or_close(int fd)
@@ -125,6 +129,17 @@ os_create_anonymous_file(off_t size, const char *debug_name)
    fd = syscall(SYS_memfd_create, debug_name, MFD_CLOEXEC | MFD_ALLOW_SEALING);
 #elif defined(__FreeBSD__)
    fd = shm_open(SHM_ANON, O_CREAT | O_RDWR | O_CLOEXEC, 0600);
+
+#elif defined(__APPLE__)
+   #if 0
+   if (!debug_name)
+      debug_name = "mesa-shared";
+   shm_unlink(debug_name);
+   fd=shm_open(debug_name, O_CREAT | O_RDWR, 0600);
+   #else
+      fd=fileno(funopen(command_init(),command_read,command_write,commans_seek,NULL));
+   #endif
+
 #elif defined(__OpenBSD__)
    char template[] = "/tmp/mesa-XXXXXXXXXX";
    fd = shm_mkstemp(template);
@@ -155,7 +170,12 @@ os_create_anonymous_file(off_t size, const char *debug_name)
    if (fd < 0)
       return -1;
 
+   #ifndef __APPLE__
    ret = ftruncate(fd, size);
+   #else
+      ret=1;
+   #endif
+
    if (ret < 0) {
       close(fd);
       return -1;

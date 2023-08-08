@@ -22,7 +22,7 @@
 #
 
 project(
-   'virglrenderer', 'c',
+   'virglrenderer', 'c', 'cpp',
    version: '0.10.4',
    license : 'MIT',
    meson_version : '>= 0.53',

@@ -1,40 +1,68 @@
-#include <IOKit/IODMACommand.h>
+#include <DriverKit/IOBufferMemoryDescriptor.h>
 #include "dma_command.h"
 #include <stdio.h>
+#include <math.h>
+#include <algorithm>
+#include <string.h>
+
+struct buffer {
+   IOBufferMemoryDescriptor* buffer;
+   void* start;
+   void* end;
+   void* cur;
+};
 
 extern "C" {
-	dma_command *command_init(){
-      dma_command *command = new dma_command;
+	dma_command command_init(int capacity){
+		if (capacity<0){
+			capacity=(int)pow(10,5);
+		}
+      dma_command command = new buffer;
+      kern_return_t test;
+       test=IOBufferMemoryDescriptor::Create(kIOMemoryDirectionInOut,capacity,0,&command->buffer);
+       fprintf(stderr,"Return code: %d\n",test);
+       fprintf(stderr,"Return code: %d\n", kIOReturnNotReady);
+      IOAddressSegment range = {};
+      fprintf(stderr, "1\n");
+      command->buffer->GetAddressRange(&range);
+      fprintf(stderr, "1\n");
+      command->start=(void*)range.address;
+      fprintf(stderr,"1\n");
+      command->end=(void *)((uint64_t)(command->start)+range.length);
+      fprintf(stderr, "1\n");
 
-      command->command=IODMACommand::withSpecification(kIODMACommandOutputBig32,32,0);
-      command->prepared=false;
-      command_prepare(command,0);
       return command;
    }
-   void command_prepare(dma_command* command, int offset){
-      if (command->prepared){
-         command->command->complete();
-      }
-
-      command->command->prepare(offset);
-      command->offset=offset;
-      command->prepared=true;
-   }
-   void command_read(dma_command* command, void* buf, size_t nbytes){
-      int bytes=command->command->readBytes(command->offset,buf,nbytes);
-      command_prepare(command,command->offset+bytes);
+   
+   int command_read(void* ptr, char* buf, int nbytes){
+   		dma_command command=(dma_command)ptr;
+   		nbytes=std::min((uint64_t)nbytes,(uint64_t)(command->end)-(uint64_t)(command->end));
+      	memcpy(buf,command->cur,nbytes);
+      	command_seek(command,nbytes,SEEK_CUR);
+      	return nbytes;
    }
 
-   void command_write(dma_command* command, void* buf, size_t nbytes){
-      int bytes=command->command->writeBytes(command->offset,buf,nbytes);
-      command_prepare(command,command->offset+bytes);
+   int command_write(void* ptr, const char* buf, int nbytes){
+   		dma_command command=(dma_command)ptr;
+   	  nbytes=std::min(nbytes,(int)(sizeof(char)*strlen(buf)));
+   	  memcpy(command->cur,buf,nbytes);
+      command_seek(command,nbytes,SEEK_CUR);
+      return nbytes;
    }
-   void command_seek(dma_command* command,off_t offset, int whence){
+   fpos_t command_seek(void* ptr,off_t offset, int whence){
+   	dma_command command=(dma_command)ptr;
       if (whence==SEEK_CUR){
-         offset+=command->offset;
+         command->cur=(void*)((uint64_t)(command->cur)+offset);
       }else if (whence==SEEK_END){
-         offset=command->offset; //Buffers have no end
-      command_prepare(command,offset);
+         command->cur=(void*)((uint64_t)(command->end)+offset);
+  	  }else if (whence==SEEK_SET){
+  	  	command->cur=(void*)((uint64_t)(command->start)+offset);
   	  }
+  	  return (uint64_t)command->cur;
   	}
+  int command_close(void* ptr){
+  		dma_command command=(dma_command)ptr;
+  		command_seek(command,0,SEEK_SET);
+  		return 0;
+  }
 }

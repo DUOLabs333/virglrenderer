@@ -46,6 +46,7 @@
 
 #ifdef __APPLE__
    #include "dma_command.h"
+   #include <stdio.h>
 
 #endif 
 #if !(defined(__FreeBSD__) || defined(HAVE_MEMFD_CREATE) || defined(HAVE_MKOSTEMP) || defined(ANDROID))
@@ -137,7 +138,7 @@ os_create_anonymous_file(off_t size, const char *debug_name)
    shm_unlink(debug_name);
    fd=shm_open(debug_name, O_CREAT | O_RDWR, 0600);
    #else
-      fd=fileno(funopen(command_init(),command_read,command_write,commans_seek,NULL));
+      fd=fileno(funopen(command_init(size),command_read,command_write,command_seek,command_close));
    #endif
 
 #elif defined(__OpenBSD__)

@@ -1,17 +1,14 @@
+#include <stdio.h>
 #ifdef __cplusplus
 extern "C" {
 #endif
-typedef struct {
-   IODMACommand* command;
-   int offset;
-   bool prepared;
-} dma_command;
-
-dma_command *command_init();
-void command_prepare(dma_command* command, int offset);
-void command_read(dma_command* command, void* buf, size_t nbytes);
-void command_write(dma_command* command, void* buf, size_t nbytes);
-void command_seek(dma_command* command,off_t offset, int whence);
+struct buffer;
+typedef struct buffer* dma_command;
+dma_command command_init(int capacity);
+int command_read(void* ptr, char* buf, int nbytes);
+int command_write(void* ptr, const char* buf, int nbytes);
+fpos_t command_seek(void* ptr,off_t offset, int whence);
+int command_close(void* ptr);
 
 #ifdef __cplusplus
 }

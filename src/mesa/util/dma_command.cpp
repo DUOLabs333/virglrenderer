@@ -1,4 +1,5 @@
-#include <DriverKit/IOBufferMemoryDescriptor.h>
+#include <IOSurface/IOSurface.h>
+#include <CoreFoundation/CFDictionary.h>
 #include "dma_command.h"
 #include <stdio.h>
 #include <math.h>
@@ -6,7 +7,7 @@
 #include <string.h>
 
 struct buffer {
-   IOBufferMemoryDescriptor* buffer;
+   IOSurfaceRef buffer;
    void* start;
    void* end;
    void* cur;
@@ -15,20 +16,31 @@ struct buffer {
 extern "C" {
 	dma_command command_init(int capacity){
 		if (capacity<0){
-			capacity=(int)pow(10,5);
+			capacity=(int)pow(10,1);
 		}
       dma_command command = new buffer;
-      kern_return_t test;
-       test=IOBufferMemoryDescriptor::Create(kIOMemoryDirectionInOut,capacity,0,&command->buffer);
-       fprintf(stderr,"Return code: %d\n",test);
-       fprintf(stderr,"Return code: %d\n", kIOReturnNotReady);
-      IOAddressSegment range = {};
-      fprintf(stderr, "1\n");
-      command->buffer->GetAddressRange(&range);
-      fprintf(stderr, "1\n");
-      command->start=(void*)range.address;
+
+      CFStringRef keys[1];
+      keys[0]=kIOSurfaceAllocSize;
+
+      int values[1]={(int)pow(10,10)};
+            fprintf(stderr,"1\n");
+      CFMutableDictionaryRef dict=CFDictionaryCreateMutable(kCFAllocatorDefault, 1, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
+            fprintf(stderr,"1\n");
+     
+      CFDictionarySetValue(dict, kIOSurfaceAllocSize, CFNumberCreate(kCFAllocatorDefault, kCFNumberSInt32Type, &capacity));
+
       fprintf(stderr,"1\n");
-      command->end=(void *)((uint64_t)(command->start)+range.length);
+
+            int test;
+      CFNumberGetValue((CFNumberRef)CFDictionaryGetValue(dict,kIOSurfaceAllocSize),kCFNumberSInt32Type,&test);
+      fprintf(stderr,"Value: %d\n",test);
+      command->buffer=IOSurfaceCreate(dict);
+
+      fprintf(stderr, "1\n");
+      command->start=IOSurfaceGetBaseAddress(command->buffer);
+      fprintf(stderr,"1\n");
+      command->end=(void *)((uint64_t)(command->start)+IOSurfaceGetAllocSize(command->buffer));
       fprintf(stderr, "1\n");
 
       return command;

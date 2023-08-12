@@ -397,7 +397,7 @@ vkr_device_memory_release(struct vkr_device_memory *mem)
 int
 vkr_device_memory_export_fd(struct vkr_device_memory *mem,
                             VkExternalMemoryHandleTypeFlagBits handle_type,
-                            int *out_fd)
+                            uintptr_t *out_fd)
 {
    struct vn_device_proc_table *vk = &mem->device->proc_table;
    int fd = -1;

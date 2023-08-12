@@ -42,6 +42,7 @@ extern "C" {
       fprintf(stderr,"1\n");
       command->end=(void *)((uint64_t)(command->start)+IOSurfaceGetAllocSize(command->buffer));
       fprintf(stderr, "1\n");
+      command->cur=command->start;
 
       return command;
    }
@@ -76,5 +77,8 @@ extern "C" {
   		dma_command command=(dma_command)ptr;
   		command_seek(command,0,SEEK_SET);
   		return 0;
+  }
+  int command_fd(dma_command command){
+  	return (uintptr_t)command->cur;
   }
 }

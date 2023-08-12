@@ -1056,7 +1056,11 @@ int virgl_renderer_resource_map(uint32_t res_handle, void **out_map, uint64_t *o
       switch (res->fd_type) {
       case VIRGL_RESOURCE_FD_DMABUF:
       case VIRGL_RESOURCE_FD_SHM:
-         map = mmap(NULL, res->map_size, PROT_WRITE | PROT_READ, MAP_SHARED, res->fd, 0);
+         #ifdef __APPLE__
+            map=(void *)res->fd;
+         #else
+            map = mmap(NULL, res->map_size, PROT_WRITE | PROT_READ, MAP_SHARED, res->fd, 0);
+         #endif
          map_size = res->map_size;
          break;
       case VIRGL_RESOURCE_FD_OPAQUE:

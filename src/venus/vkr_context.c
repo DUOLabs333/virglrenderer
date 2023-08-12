@@ -326,7 +326,7 @@ vkr_context_get_blob_locked(struct virgl_context *base,
    struct vkr_context *ctx = (struct vkr_context *)base;
    struct vkr_device_memory *mem;
    enum virgl_resource_fd_type fd_type = VIRGL_RESOURCE_FD_INVALID;
-   int fd = -1;
+   uintptr_t fd = -1;
 
    /* blob_id == 0 does not refer to an existing VkDeviceMemory, but implies a
     * shm allocation.  It serves a similar purpose as iov does, but it is

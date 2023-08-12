@@ -39,7 +39,7 @@ struct virgl_context_blob {
    /* valid fd or pipe resource */
    enum virgl_resource_fd_type type;
    union {
-      int fd;
+      uintptr_t fd;
       uint32_t opaque_handle;
       struct pipe_resource *pipe_resource;
    } u;

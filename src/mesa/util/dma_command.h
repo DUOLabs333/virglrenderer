@@ -9,6 +9,7 @@ int command_read(void* ptr, char* buf, int nbytes);
 int command_write(void* ptr, const char* buf, int nbytes);
 fpos_t command_seek(void* ptr,off_t offset, int whence);
 int command_close(void* ptr);
+int command_fd(dma_command command);
 
 #ifdef __cplusplus
 }

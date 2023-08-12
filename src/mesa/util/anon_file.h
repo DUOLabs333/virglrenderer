@@ -28,6 +28,6 @@
 
 #include <sys/types.h>
 
-int os_create_anonymous_file(off_t size, const char *debug_name);
+uintptr_t os_create_anonymous_file(off_t size, const char *debug_name);
 
 #endif

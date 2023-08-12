@@ -84,7 +84,7 @@ struct virgl_resource {
 
    /* valid fd or handle type: */
    enum virgl_resource_fd_type fd_type;
-   int fd;
+   uintptr_t fd;
 
    /**
     * For fd_type==VIRGL_RESOURCE_OPAQUE_HANDLE, the id of the context

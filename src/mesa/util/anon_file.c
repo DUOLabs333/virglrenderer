@@ -116,7 +116,7 @@ create_tmpfile_cloexec(char *tmpname)
  * transmitting the file descriptor over Unix sockets using the
  * SCM_RIGHTS methods.
  */
-int
+uintptr_t
 os_create_anonymous_file(off_t size, const char *debug_name)
 {
    int fd, ret;
@@ -138,7 +138,8 @@ os_create_anonymous_file(off_t size, const char *debug_name)
    shm_unlink(debug_name);
    fd=shm_open(debug_name, O_CREAT | O_RDWR, 0600);
    #else
-      fd=fileno(funopen(command_init(size),command_read,command_write,command_seek,command_close));
+      //fd=fileno(funopen(command_init(size),command_read,command_write,command_seek,command_close));
+      fd=command_fd(command_init(size));
    #endif
 
 #elif defined(__OpenBSD__)
